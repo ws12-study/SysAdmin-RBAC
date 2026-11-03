@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yourname.mapper.SysDictDataMapper">
+
+    <resultMap id="SysDictDataResult" type="SysDictData">
+        <id property="id" column="id"/>
+        <result property="dictSort" column="dict_sort"/>
+        <result property="dictLabel" column="dict_label"/>
+        <result property="dictValue" column="dict_value"/>
+        <result property="dictType" column="dict_type"/>
+        <result property="listClass" column="list_class"/>
+        <result property="isDefault" column="is_default"/>
+        <result property="status" column="status"/>
+        <result property="createBy" column="create_by"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="dataColumns">
+        id, dict_sort, dict_label, dict_value, dict_type, list_class, is_default, status, create_by, remark
+    </sql>
+
+    <select id="selectAllData" resultMap="SysDictDataResult">
+        SELECT <include refid="dataColumns"/>
+        FROM sys_dict_data
+        WHERE del_flag = '0' AND status = '0'
+        ORDER BY dict_type, dict_sort
+    </select>
+
+    <select id="selectDataByType" resultMap="SysDictDataResult">
+        SELECT <include refid="dataColumns"/>
+        FROM sys_dict_data
+        WHERE dict_type = #{dictType} AND del_flag = '0'
+        ORDER BY dict_sort
+    </select>
+
+    <select id="selectDataById" resultMap="SysDictDataResult">
+        SELECT <include refid="dataColumns"/>
+        FROM sys_dict_data
+        WHERE id = #{id} AND del_flag = '0'
+    </select>
+
+    <insert id="insertData" parameterType="SysDictData" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO sys_dict_data
+        (dict_sort, dict_label, dict_value, dict_type, list_class, is_default, status, create_by, remark)
+        VALUES
+        (#{dictSort}, #{dictLabel}, #{dictValue}, #{dictType}, #{listClass}, #{isDefault}, #{status}, #{createBy}, #{remark})
+    </insert>
+
+    <update id="updateData">
+        UPDATE sys_dict_data
+        SET dict_sort = #{dictSort},
+            dict_label = #{dictLabel},
+            dict_value = #{dictValue},
+            list_class = #{listClass},
+            is_default = #{isDefault},
+            status = #{status},
+            update_by = #{createBy},
+            remark = #{remark}
+        WHERE id = #{id}
+    </update>
+
+    <update id="deleteDataById">
+        UPDATE sys_dict_data SET del_flag = '1', status = '1' WHERE id = #{id}
+    </update>
+
+    <update id="clearDefaultByType">
+        UPDATE sys_dict_data SET is_default = 'N' WHERE dict_type = #{dictType}
+    </update>
+
+</mapper>

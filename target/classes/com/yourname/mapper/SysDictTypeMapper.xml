@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yourname.mapper.SysDictTypeMapper">
+
+    <resultMap id="SysDictTypeResult" type="SysDictType">
+        <id property="id" column="id"/>
+        <result property="dictName" column="dict_name"/>
+        <result property="dictType" column="dict_type"/>
+        <result property="status" column="status"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="typeColumns">
+        id, dict_name, dict_type, status, create_by, create_time, remark
+    </sql>
+
+    <select id="selectAllTypes" resultMap="SysDictTypeResult">
+        SELECT <include refid="typeColumns"/> FROM sys_dict_type ORDER BY id
+    </select>
+
+    <select id="selectTypeById" resultMap="SysDictTypeResult">
+        SELECT <include refid="typeColumns"/> FROM sys_dict_type WHERE id = #{id}
+    </select>
+
+    <select id="selectTypeByType" resultMap="SysDictTypeResult">
+        SELECT <include refid="typeColumns"/> FROM sys_dict_type WHERE dict_type = #{dictType}
+    </select>
+
+    <insert id="insertType" parameterType="SysDictType" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO sys_dict_type (dict_name, dict_type, status, create_by, remark)
+        VALUES (#{dictName}, #{dictType}, #{status}, #{createBy}, #{remark})
+    </insert>
+
+    <update id="updateType">
+        UPDATE sys_dict_type
+        SET dict_name = #{dictName},
+            dict_type = #{dictType},
+            status = #{status},
+            update_by = #{createBy},
+            remark = #{remark}
+        WHERE id = #{id}
+    </update>
+
+    <update id="deleteTypeById">
+        UPDATE sys_dict_type SET del_flag = '1', status = '1' WHERE id = #{id}
+    </update>
+
+</mapper>

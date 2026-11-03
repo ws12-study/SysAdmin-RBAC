@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yourname.mapper.SysOperLogMapper">
+
+    <resultMap id="SysOperLogResult" type="SysOperLog">
+        <id property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="businessType" column="business_type"/>
+        <result property="method" column="method"/>
+        <result property="requestMethod" column="request_method"/>
+        <result property="operatorType" column="operator_type"/>
+        <result property="operName" column="oper_name"/>
+        <result property="operUrl" column="oper_url"/>
+        <result property="operIp" column="oper_ip"/>
+        <result property="operLocation" column="oper_location"/>
+        <result property="operParam" column="oper_param"/>
+        <result property="jsonResult" column="json_result"/>
+        <result property="status" column="status"/>
+        <result property="errorMsg" column="error_msg"/>
+        <result property="operTime" column="oper_time"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <insert id="insertOperLog" parameterType="SysOperLog" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO sys_oper_log
+        (title, business_type, method, request_method, operator_type, oper_name, oper_url,
+         oper_ip, oper_location, oper_param, json_result, status, error_msg, oper_time, create_by)
+        VALUES
+        (#{title}, #{businessType}, #{method}, #{requestMethod}, #{operatorType}, #{operName}, #{operUrl},
+         #{operIp}, #{operLocation}, #{operParam}, #{jsonResult}, #{status}, #{errorMsg}, #{operTime}, #{createBy})
+    </insert>
+
+    <select id="selectLatest" resultMap="SysOperLogResult">
+        SELECT id, title, business_type, method, request_method, operator_type, oper_name, oper_url,
+               oper_ip, oper_location, oper_param, json_result, status, error_msg, oper_time,
+               create_by, create_time, update_by, update_time
+        FROM sys_oper_log
+        ORDER BY oper_time DESC, id DESC
+        LIMIT #{limit}
+    </select>
+
+    <sql id="operLogFilter">
+        <where>
+            <if test="query != null and query.title != null and query.title != ''">
+                AND title LIKE CONCAT('%', #{query.title}, '%')
+            </if>
+            <if test="query != null and query.operName != null and query.operName != ''">
+                AND oper_name LIKE CONCAT('%', #{query.operName}, '%')
+            </if>
+            <if test="query != null and query.status != null and query.status != ''">
+                AND status = #{query.status}
+            </if>
+            <if test="query != null and query.beginTime != null and query.beginTime != ''">
+                AND oper_time &gt;= #{query.beginTime}
+            </if>
+            <if test="query != null and query.endTime != null and query.endTime != ''">
+                AND oper_time &lt;= #{query.endTime}
+            </if>
+        </where>
+    </sql>
+
+    <select id="selectByPage" resultMap="SysOperLogResult">
+        SELECT id, title, business_type, method, request_method, operator_type, oper_name, oper_url,
+               oper_ip, oper_location, oper_param, json_result, status, error_msg, oper_time,
+               create_by, create_time, update_by, update_time
+        FROM sys_oper_log
+        <include refid="operLogFilter"/>
+        ORDER BY oper_time DESC, id DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="countByPage" resultType="long">
+        SELECT COUNT(1) FROM sys_oper_log
+        <include refid="operLogFilter"/>
+    </select>
+
+    <select id="countOperLog" resultType="long">
+        SELECT COUNT(1) FROM sys_oper_log
+    </select>
+
+</mapper>

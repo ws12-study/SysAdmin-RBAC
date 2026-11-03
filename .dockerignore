@@ -1,0 +1,7 @@
+# 不纳入 Docker 构建上下文，加快构建并避免把编译产物/日志传进镜像
+target/
+logs/
+.git/
+.idea/
+*.iml
+*.class

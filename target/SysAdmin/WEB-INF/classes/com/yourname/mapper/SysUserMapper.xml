@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yourname.mapper.SysUserMapper">
+
+    <resultMap id="SysUserResult" type="SysUser">
+        <id property="id" column="id"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="userName" column="user_name"/>
+        <result property="nickName" column="nick_name"/>
+        <result property="userType" column="user_type"/>
+        <result property="password" column="password"/>
+        <result property="realName" column="real_name"/>
+        <result property="email" column="email"/>
+        <result property="phonenumber" column="phonenumber"/>
+        <result property="sex" column="sex"/>
+        <result property="avatar" column="avatar"/>
+        <result property="status" column="status"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="loginIp" column="login_ip"/>
+        <result property="loginDate" column="login_date"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectUserColumns">
+        id, dept_id, user_name, nick_name, user_type, password, real_name, email,
+        phonenumber, sex, avatar, status, del_flag, login_ip, login_date,
+        create_by, create_time, update_by, update_time, remark
+    </sql>
+
+    <select id="selectByUserName" resultMap="SysUserResult">
+        SELECT
+        <include refid="selectUserColumns"/>
+        FROM sys_user
+        WHERE user_name = #{userName}
+        AND del_flag = '0'
+        LIMIT 1
+    </select>
+
+    <select id="countUser" resultType="long">
+        SELECT COUNT(1) FROM sys_user WHERE del_flag = '0'
+    </select>
+
+    <select id="selectUserList" resultType="com.yourname.entity.vo.SysUserVo">
+        SELECT u.*,
+               d.dept_name AS dept_name,
+               (SELECT GROUP_CONCAT(r.role_name SEPARATOR ',')
+                  FROM sys_user_role ur
+                  INNER JOIN sys_role r ON r.id = ur.role_id
+                 WHERE ur.user_id = u.id) AS role_names
+        FROM sys_user u
+        LEFT JOIN sys_dept d ON d.id = u.dept_id
+        WHERE u.del_flag = '0'
+        <if test="userName != null and userName != ''">
+            AND (u.user_name LIKE CONCAT('%', #{userName}, '%')
+              OR u.nick_name LIKE CONCAT('%', #{userName}, '%'))
+        </if>
+        <if test="status != null and status != ''">
+            AND u.status = #{status}
+        </if>
+        <if test="dataScope != null">
+            AND (${dataScope})
+        </if>
+        ORDER BY u.id
+        <if test="limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <!-- 与 selectUserList 同一套过滤条件，用于分页总条数 -->
+    <select id="selectUserCount" resultType="long">
+        SELECT COUNT(1)
+        FROM sys_user u
+        WHERE u.del_flag = '0'
+        <if test="userName != null and userName != ''">
+            AND (u.user_name LIKE CONCAT('%', #{userName}, '%')
+              OR u.nick_name LIKE CONCAT('%', #{userName}, '%'))
+        </if>
+        <if test="status != null and status != ''">
+            AND u.status = #{status}
+        </if>
+        <if test="dataScope != null">
+            AND (${dataScope})
+        </if>
+    </select>
+
+    <select id="selectUserById" resultMap="SysUserResult">
+        SELECT
+        <include refid="selectUserColumns"/>
+        FROM sys_user
+        WHERE id = #{id}
+    </select>
+
+    <insert id="insertUser" parameterType="SysUser" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO sys_user
+        (dept_id, user_name, nick_name, user_type, password, real_name, email,
+         phonenumber, sex, avatar, status, del_flag, create_by, update_by)
+        VALUES
+        (#{deptId}, #{userName}, #{nickName}, '0', #{password}, #{realName}, #{email},
+         #{phonenumber}, '0', '', '0', '0', #{createBy}, #{createBy})
+    </insert>
+
+    <!-- 单条记录是否落在数据范围内：用于防止"列表看不见但直接拼 ID 能操作"的越权 -->
+    <select id="countUserByIdInScope" resultType="long">
+        SELECT COUNT(1)
+        FROM sys_user u
+        WHERE u.id = #{id}
+          AND u.del_flag = '0'
+        <if test="dataScope != null">
+            AND (${dataScope})
+        </if>
+    </select>
+
+    <update id="updateStatus">
+        UPDATE sys_user
+        SET status = #{status},
+            update_by = #{updateBy},
+            update_time = NOW()
+        WHERE id = #{id}
+          AND del_flag = '0'
+    </update>
+
+    <update id="updatePassword">
+        UPDATE sys_user
+        SET password = #{password}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateLoginInfo">
+        UPDATE sys_user
+        SET login_ip = #{loginIp},
+            login_date = #{loginDate}
+        WHERE id = #{id}
+    </update>
+
+</mapper>

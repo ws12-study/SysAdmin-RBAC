@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/context
+                           http://www.springframework.org/schema/context/spring-context.xsd
+                           http://www.springframework.org/schema/tx
+                           http://www.springframework.org/schema/tx/spring-tx.xsd
+                           http://www.springframework.org/schema/aop
+                           http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+    <!-- 加载数据库配置 -->
+    <context:property-placeholder location="classpath:jdbc.properties" ignore-unresolvable="true"/>
+
+    <!-- 注解扫描：Spring 不接管 Action（Action 由 Struts2 通过 spring-plugin 按需获取） -->
+    <context:component-scan base-package="com.yourname">
+        <context:exclude-filter type="annotation"
+                                expression="org.springframework.stereotype.Controller"/>
+        <context:exclude-filter type="assignable"
+                                expression="com.opensymphony.xwork2.Action"/>
+    </context:component-scan>
+
+    <!-- ==================== Druid 数据源 ==================== -->
+    <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close">
+        <property name="driverClassName" value="${jdbc.driver}"/>
+        <property name="url" value="${jdbc.url}"/>
+        <property name="username" value="${jdbc.username}"/>
+        <property name="password" value="${jdbc.password}"/>
+
+        <property name="initialSize" value="${druid.initialSize}"/>
+        <property name="minIdle" value="${druid.minIdle}"/>
+        <property name="maxActive" value="${druid.maxActive}"/>
+        <property name="maxWait" value="${druid.maxWait}"/>
+
+        <property name="timeBetweenEvictionRunsMillis" value="${druid.timeBetweenEvictionRunsMillis}"/>
+        <property name="minEvictableIdleTimeMillis" value="${druid.minEvictableIdleTimeMillis}"/>
+        <property name="validationQuery" value="${druid.validationQuery}"/>
+        <property name="testWhileIdle" value="${druid.testWhileIdle}"/>
+        <property name="testOnBorrow" value="${druid.testOnBorrow}"/>
+        <property name="testOnReturn" value="${druid.testOnReturn}"/>
+
+        <property name="poolPreparedStatements" value="true"/>
+        <property name="maxPoolPreparedStatementPerConnectionSize" value="20"/>
+
+        <property name="filters" value="stat,wall,slf4j"/>
+        <property name="connectionProperties" value="druid.stat.mergeSql=true;druid.stat.slowSqlMillis=2000"/>
+    </bean>
+
+    <!-- ==================== MyBatis ==================== -->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"/>
+        <!-- 实体类别名包 -->
+        <property name="typeAliasesPackage" value="com.yourname.entity"/>
+        <!-- Mapper XML 位置 -->
+        <property name="mapperLocations" value="classpath*:com/yourname/**/mapper/**/*.xml"/>
+        <!-- MyBatis 主配置 -->
+        <property name="configuration">
+            <bean class="org.apache.ibatis.session.Configuration">
+                <property name="mapUnderscoreToCamelCase" value="true"/>
+                <property name="logImpl" value="org.apache.ibatis.logging.slf4j.Slf4jImpl"/>
+                <property name="defaultStatementTimeout" value="30"/>
+            </bean>
+        </property>
+        <!-- 分页等插件在此注入：
+        <property name="plugins">
+            <array>
+                <bean class="com.github.pagehelper.PageInterceptor"/>
+            </array>
+        </property>
+        -->
+    </bean>
+
+    <!-- Mapper 接口扫描 -->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.yourname.**.mapper"/>
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"/>
+    </bean>
+
+    <!-- ==================== 事务 ==================== -->
+    <bean id="transactionManager"
+          class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+    <tx:advice id="txAdvice" transaction-manager="transactionManager">
+        <tx:attributes>
+            <tx:method name="select*" read-only="true" propagation="SUPPORTS"/>
+            <tx:method name="query*" read-only="true" propagation="SUPPORTS"/>
+            <tx:method name="get*" read-only="true" propagation="SUPPORTS"/>
+            <tx:method name="find*" read-only="true" propagation="SUPPORTS"/>
+            <tx:method name="list*" read-only="true" propagation="SUPPORTS"/>
+            <tx:method name="*" propagation="REQUIRED" rollback-for="java.lang.Exception"/>
+        </tx:attributes>
+    </tx:advice>
+
+    <aop:config proxy-target-class="true">
+        <aop:pointcut id="servicePointcut" expression="execution(* com.yourname..service..*.*(..))"/>
+        <aop:advisor advice-ref="txAdvice" pointcut-ref="servicePointcut"/>
+    </aop:config>
+
+    <tx:annotation-driven transaction-manager="transactionManager" proxy-target-class="true"/>
+
+</beans>

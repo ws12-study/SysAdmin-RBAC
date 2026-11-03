@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yourname.mapper.SysRoleMapper">
+
+    <resultMap id="SysRoleResult" type="SysRole">
+        <id property="id" column="id"/>
+        <result property="roleName" column="role_name"/>
+        <result property="roleKey" column="role_key"/>
+        <result property="roleSort" column="role_sort"/>
+        <result property="dataScope" column="data_scope"/>
+        <result property="status" column="status"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <select id="selectRolesByUserId" resultMap="SysRoleResult">
+        SELECT r.id, r.role_name, r.role_key, r.role_sort, r.data_scope, r.status,
+               r.del_flag, r.create_by, r.create_time, r.update_by, r.update_time, r.remark
+        FROM sys_role r
+        INNER JOIN sys_user_role ur ON ur.role_id = r.id
+        WHERE ur.user_id = #{userId}
+          AND r.del_flag = '0'
+          AND r.status = '0'
+        ORDER BY r.role_sort
+    </select>
+
+    <select id="selectAllRoles" resultMap="SysRoleResult">
+        SELECT r.id, r.role_name, r.role_key, r.role_sort, r.data_scope, r.status,
+               r.del_flag, r.create_by, r.create_time, r.update_by, r.update_time, r.remark
+        FROM sys_role r
+        WHERE r.del_flag = '0'
+        ORDER BY r.role_sort
+    </select>
+
+    <select id="selectRoleIdsByUserId" resultType="long">
+        SELECT role_id FROM sys_user_role WHERE user_id = #{userId}
+    </select>
+
+    <delete id="deleteUserRolesByUserId">
+        DELETE FROM sys_user_role WHERE user_id = #{userId}
+    </delete>
+
+    <select id="selectRoleById" resultMap="SysRoleResult">
+        SELECT id, role_name, role_key, role_sort, data_scope, status, del_flag,
+               create_by, create_time, update_by, update_time, remark
+        FROM sys_role
+        WHERE id = #{id} AND del_flag = '0'
+    </select>
+
+    <select id="selectRoleByKey" resultMap="SysRoleResult">
+        SELECT id, role_name, role_key, role_sort, data_scope, status, del_flag,
+               create_by, create_time, update_by, update_time, remark
+        FROM sys_role
+        WHERE role_key = #{roleKey} AND del_flag = '0'
+    </select>
+
+    <insert id="insertRole" parameterType="SysRole" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO sys_role
+        (role_name, role_key, role_sort, data_scope, status, del_flag, create_by, update_by)
+        VALUES
+        (#{roleName}, #{roleKey}, #{roleSort}, #{dataScope}, #{status}, '0', #{createBy}, #{createBy})
+    </insert>
+
+    <update id="updateRole">
+        UPDATE sys_role
+        SET role_name = #{roleName},
+            role_key = #{roleKey},
+            role_sort = #{roleSort},
+            data_scope = #{dataScope},
+            status = #{status},
+            update_by = #{createBy},
+            remark = #{remark}
+        WHERE id = #{id}
+    </update>
+
+    <update id="deleteRoleById">
+        UPDATE sys_role SET del_flag = '1' WHERE id = #{id}
+    </update>
+
+    <select id="countUserByRoleId" resultType="long">
+        SELECT COUNT(1) FROM sys_user_role WHERE role_id = #{roleId}
+    </select>
+
+    <select id="selectUserIdsByRoleId" resultType="long">
+        SELECT user_id FROM sys_user_role WHERE role_id = #{roleId}
+    </select>
+
+    <select id="selectMenuIdsByRoleId" resultType="long">
+        SELECT menu_id FROM sys_role_menu WHERE role_id = #{roleId}
+    </select>
+
+    <delete id="deleteRoleMenuByRoleId">
+        DELETE FROM sys_role_menu WHERE role_id = #{roleId}
+    </delete>
+
+    <delete id="deleteRoleMenuByMenuId">
+        DELETE FROM sys_role_menu WHERE menu_id = #{menuId}
+    </delete>
+
+    <insert id="insertRoleMenu">
+        INSERT INTO sys_role_menu (role_id, menu_id, create_by) VALUES (#{roleId}, #{menuId}, 'system')
+    </insert>
+
+    <select id="selectDeptIdsByRoleId" resultType="long">
+        SELECT dept_id FROM sys_role_dept WHERE role_id = #{roleId}
+    </select>
+
+    <delete id="deleteRoleDeptByRoleId">
+        DELETE FROM sys_role_dept WHERE role_id = #{roleId}
+    </delete>
+
+    <insert id="insertRoleDept">
+        INSERT INTO sys_role_dept (role_id, dept_id, create_by) VALUES (#{roleId}, #{deptId}, 'system')
+    </insert>
+
+</mapper>
